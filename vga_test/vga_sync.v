@@ -99,7 +99,7 @@ module vga_sync
                             && v_count_reg <= END_V_RETRACE;
 
         // video only on when pixels are in both horizontal and vertical display region
-        assign video_on = (h_count_reg >= H_R_BORDER) && (h_count_reg < H_DISPLAY + H_R_BORDER) 
+        assign video_on = (h_count_reg < H_DISPLAY) 
                            && (v_count_reg < V_DISPLAY);
 
         // output signals
