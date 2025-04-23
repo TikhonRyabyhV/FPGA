@@ -3,7 +3,7 @@
 module vga_testbench ();
 
 reg     clock;
-initial clock = 1'b0;
+initial clock = 1'b1;
 
 always
 	#1 clock = ~ clock;
@@ -37,32 +37,29 @@ initial begin
 	out_dsp     = $fopen(output_file);
 
 	    reset = 1'b0;
-	#2; reset = 1'b1;
+	#1; reset = 1'b1;
 
-	#2000_000;
-	$fclose(out_dsp);
-
-	$finish;
+	#5000_000;
 
 end
 
 integer cnt_h = 0;
 integer cnt_v = 0;
 
-always @(posedge vga_clock) begin
-	if(blank) begin
+always @(posedge clock) begin
+	if((~vga_clock) && blank && cnt_h < 640) begin
 		$fwrite(out_dsp, "%d ", rgb);
 		++cnt_h;
 	end
 
 	else begin
-		if(cnt_h >= 640) begin
+		if((~vga_clock) && cnt_h >= 640) begin
 			$fwrite(out_dsp, "\n");
 			cnt_h = 0;
 			++cnt_v;
 		end
 
-		if(cnt_v >= 480) begin
+		if((~vga_clock) && cnt_v >= 480) begin
 			$fclose(out_dsp);
 
 			$finish;
