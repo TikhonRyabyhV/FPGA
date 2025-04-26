@@ -33,7 +33,7 @@ vga_from_mem vga_test (
 
 integer out_dsp;
 
-reg [8 * 9 : 1] output_file;
+reg [8 * 14 : 1] output_file;
 
 integer i;
 
@@ -52,7 +52,7 @@ initial begin
 	    reset = 1'b0;
 	#1; reset = 1'b1;
 
-	#5000_000;
+	#10_000_000;
 
 end
 
@@ -69,6 +69,8 @@ end
 integer cnt_h = 0;
 integer cnt_v = 0;
 
+integer frame_num = 0;
+
 always @(posedge clock) begin
 	if((~vga_clock) && blank && cnt_h < 640) begin
 		$fwrite(out_dsp, "%d ", rgb);
@@ -84,8 +86,19 @@ always @(posedge clock) begin
 
 		if((~vga_clock) && cnt_v >= 480) begin
 			$fclose(out_dsp);
+			++frame_num;
 
-			$finish;
+			if(frame_num >= 2) begin
+				$finish;
+			end
+
+			else begin
+				output_file = {"frame_next.txt"} ;
+				out_dsp     = $fopen(output_file);
+
+				cnt_h = 0;
+				cnt_v = 0;
+			end
 		end
 	end
 end
