@@ -29,6 +29,8 @@ vga vga_test (
 			.vsync(vsync        ),
 			.blank(blank        ),
 			.vga_clock(vga_clock),
+			.rep_frame(         ),
+			.end_frame(         ),
 			.addr     (addr     ),
 			.rgb      (rgb      )
 );

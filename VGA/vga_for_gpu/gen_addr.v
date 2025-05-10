@@ -12,7 +12,9 @@ module gen_addr
 		parameter V_B_BORDER      =  33, // vertical bottom border
 		parameter V_RETRACE       =   2, // vertical retrace
 
-		parameter H_END_AREA      = H_DISPLAY + H_L_BORDER,
+		parameter H_START_AREA    = H_L_BORDER - 1,
+		parameter V_START_AREA    = 0,
+		parameter H_END_AREA      = H_L_BORDER + H_DISPLAY,
 		parameter V_END_AREA      = 448
 	)
 	(

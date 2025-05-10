@@ -12,7 +12,9 @@ module vga
 		parameter V_B_BORDER      =  33, // vertical bottom border
 		parameter V_RETRACE       =   2, // vertical retrace
 
-		parameter H_END_AREA      = H_DISPLAY + H_L_BORDER,
+		parameter H_START_AREA    = H_L_BORDER - 1,
+		parameter V_START_AREA    = 0,
+		parameter H_END_AREA      = H_L_BORDER + H_DISPLAY,
 		parameter V_END_AREA      = 448
 	)
 	(
@@ -25,6 +27,9 @@ module vga
 		output wire        vsync    ,
 		output wire        blank    ,
 		output wire        vga_clock,
+
+		output wire        rep_frame, // repeat current frame
+		output wire        end_frame, // end of current frame, waiting for new frame
 
 		output wire [11:0] addr     ,
 		output wire [23:0] rgb
@@ -47,6 +52,8 @@ module vga
 	wire [1:0] vga_clock_out;
 	
 	reg [23:0] rgb_reg;
+
+	reg [ 5:0] frame_counter;
 	
 	// video status output from vga_sync to tell when to route out rgb signal to DAC
 	wire video_on;
@@ -91,8 +98,10 @@ module vga
 		.V_B_BORDER(V_B_BORDER),
 		.V_RETRACE (V_RETRACE ),
 
-		.H_END_AREA(H_END_AREA),
-		.V_END_AREA(V_END_AREA)
+		.H_START_AREA(H_START_AREA),
+		.V_START_AREA(V_START_AREA),
+		.H_END_AREA  (H_END_AREA  ),
+		.V_END_AREA  (V_END_AREA  )
 	) 
 	gen_addr_unit (
 		.clock    (clock       ),
@@ -118,13 +127,24 @@ module vga
 		end
 			
 		else begin
-			rgb_reg <= ~vga_clock                        ? 
-				   (x < H_END_AREA && y < V_END_AREA ? 
+			rgb_reg <= ~vga_clock                   ? 
+				   (x < H_END_AREA & y < V_END_AREA ? 
 				   {3 {data}} :
 				    3'b0)     :
 				    rgb_reg;
 		end
         end
+
+	always @(posedge clock) begin
+		if (~ reset) begin
+			frame_counter <= 62;
+		end
+
+		else begin
+			frame_counter <= ~vga_clock & (y == V_END_AREA) & (x == H_END_AREA) ?
+					  frame_counter + 1 : frame_counter;
+		end
+	end
 
         // output
         assign rgb   = (video_on) ? rgb_reg : 24'b0;
@@ -136,7 +156,9 @@ module vga
 
 	assign video_on  = video_on_out [1];
 	assign vga_clock = vga_clock_out[1];
+
+	assign rep_frame = (y == V_END_AREA) & (x == H_END_AREA) & (frame_counter != 63) ? 1'b1 : 1'b0; 
+	assign end_frame = (y == V_END_AREA) & (x == H_END_AREA) & (frame_counter == 63) ? 1'b1 : 1'b0; 
 		  
 endmodule
-
 
